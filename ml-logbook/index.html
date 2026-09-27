@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>ML + AI Logbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --ink:#16202E; --muted:#5A6677; --line:#D8DEE6;
+  --grid:rgba(45,91,215,.06); --accent:#2D5BD7; --accent-ink:#FFFFFF; --accent-soft:#E7EDFC;
+  --done:#1C8455; --done-soft:#E2F2EA; --warn-soft:#FFF4E0; --warn:#9A5B00;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0D1219; --surface:#151C26; --ink:#E3E8EF; --muted:#94A1B3; --line:#27313E;
+  --grid:rgba(125,155,255,.05); --accent:#7D9BFF; --accent-ink:#0D1219; --accent-soft:#1B2645;
+  --done:#4CC38F; --done-soft:#15302A; --warn-soft:#33260F; --warn:#F2B75C;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0D1219; --surface:#151C26; --ink:#E3E8EF; --muted:#94A1B3; --line:#27313E;
+  --grid:rgba(125,155,255,.05); --accent:#7D9BFF; --accent-ink:#0D1219; --accent-soft:#1B2645;
+  --done:#4CC38F; --done-soft:#15302A; --warn-soft:#33260F; --warn:#F2B75C;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--bg); color:var(--ink); font:15px/1.55 var(--body);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  padding-inline:16px; padding-block:28px 64px;
+}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+a{color:var(--accent);text-underline-offset:2px}
+code{font:13px var(--mono);background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,5vw,40px);letter-spacing:-.01em}
+h2{font-size:24px}
+h3{font-size:18px}
+.eyebrow{font:500 12px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.muted{color:var(--muted)}
+
+/* header */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+header .left{display:flex;flex-direction:column;gap:6px}
+.sync{font:12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync[data-state="cloud"]::before{background:var(--done)}
+.sync[data-state="local"]::before{background:var(--warn)}
+.stats{display:flex;gap:24px;font-variant-numeric:tabular-nums}
+.stat b{display:block;font:600 22px var(--display)}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* today */
+.today{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 0 var(--line)}
+.today .top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.today .date{font:500 13px var(--mono);color:var(--accent)}
+
+/* month rail */
+.rail{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:6px}
+.rail button{
+  appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:8px;padding:8px 0 10px;font:600 14px var(--display);cursor:pointer;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;gap:2px
+}
+.rail button small{font:400 10px var(--mono);color:var(--muted)}
+.rail button .fill{position:absolute;left:0;bottom:0;height:3px;background:var(--done);width:0}
+.rail button[aria-current="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.rail button[aria-current="true"] small{color:var(--accent-ink);opacity:.8}
+.rail button:focus-visible,.chk input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.phases{display:flex;justify-content:space-between;font:11px var(--mono);color:var(--muted);flex-wrap:wrap;gap:4px 12px;margin-top:6px}
+@media (max-width:640px){.rail{grid-template-columns:repeat(7,minmax(0,1fr))}}
+
+/* month detail */
+.month-head{display:flex;flex-direction:column;gap:8px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--done);width:0;transition:width .3s}
+#month{display:flex;flex-direction:column;gap:32px}
+section.week{display:flex;flex-direction:column;gap:12px}
+.week-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+.week-head .count{font:12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.intro{margin:0;color:var(--muted);max-width:68ch}
+.list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.list>li+li{border-top:1px solid var(--line)}
+.item{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:14px 16px;align-items:start}
+.item.is-today{background:var(--accent-soft)}
+.item.done .body{color:var(--muted)}
+.item.done .topic{text-decoration:line-through;text-decoration-color:var(--done)}
+.item .meta{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:2px}
+.item .d{font:500 12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.item .topic{font-weight:600}
+.tag{font:500 10px var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;border-radius:4px;background:var(--accent);color:var(--accent-ink)}
+.item .body{max-width:70ch}
+
+.chk{position:relative;display:inline-flex;width:24px;height:24px;margin-top:1px;cursor:pointer}
+.chk input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.chk span{width:24px;height:24px;border:2px solid var(--muted);border-radius:6px;display:grid;place-items:center;transition:background .15s,border-color .15s}
+.chk span svg{width:14px;height:14px;stroke:var(--surface);stroke-width:3;fill:none;opacity:0}
+.chk input:checked+span{background:var(--done);border-color:var(--done)}
+.chk input:checked+span svg{opacity:1}
+
+.build{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.build .bh{padding:14px 16px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line);background:var(--accent-soft)}
+.build .list{border:0;border-radius:0}
+.build .donewhen{padding:12px 16px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+
+.res{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.res li{padding:10px 16px;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:baseline}
+.res li+li{border-top:1px solid var(--line)}
+.res .star{color:var(--warn);font-size:14px}
+.res .kind{font:11px var(--mono);color:var(--muted);text-align:right;white-space:nowrap}
+@media (max-width:560px){.res li{grid-template-columns:22px 1fr}.res .kind{grid-column:2;text-align:left}}
+.note{background:var(--warn-soft);color:var(--ink);border-radius:10px;padding:12px 16px;font-size:14px}
+.note b{color:var(--warn)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.two{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="left">
+      <span class="eyebrow">14-month ML + AI roadmap · from Mon 28 Sep 2026</span>
+      <h1>Shahid's ML + AI Logbook</h1>
+      <span class="sync" id="sync" data-state="wait">Connecting…</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="st-streak">0</b><span>days in a row</span></div>
+      <div class="stat"><b id="st-m1">0%</b><span>Month 1 done</span></div>
+      <div class="stat"><b id="st-all">0/0</b><span>tasks ticked</span></div>
+    </div>
+  </header>
+
+  <div class="today" id="today"></div>
+
+  <nav aria-label="Months">
+    <div class="rail" id="rail"></div>
+    <div class="phases"><span>1 Foundations</span><span>3–4 Classical ML</span><span>5–6 Deep learning</span><span>7 LLM internals</span><span>8–14 AI engineering</span></div>
+  </nav>
+
+  <main id="month"></main>
+
+  <footer>Built from the plan files in this project (roadmap folder). Ticks are saved in this browser, so use the same browser each day (clearing site data resets them). Your 7:30 PM and weekend reminders keep posting in the project as before.</footer>
+</div>
+
+<script>
+const DATA = {"weeks": [{"title": "Week 1: Python for a JavaScript developer", "intro": ["You know how to program, so this week is about Python's idioms and differences from JS, not basics.", "<strong>Videos for this week:<\/strong> <a href=\"https://www.youtube.com/playlist?list=PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU\" target=\"_blank\" rel=\"noopener\">Corey Schafer, Python Tutorials<\/a> on YouTube; pick the videos that match each day's topic. <strong>Extra practice:<\/strong> <a href=\"https://www.kaggle.com/learn/python\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Python<\/a> (free, in-browser exercises)."], "days": [{"id": "m1-2026-09-28", "date": "2026-09-28", "label": "Mon 28 Sep", "topic": "Setup and syntax", "text": "Install Python and uv; create a project; open a Jupyter notebook in VS Code. Read sections 3 and 4 of the official <a href=\"https://docs.python.org/3/tutorial/\" target=\"_blank\" rel=\"noopener\">Python tutorial<\/a> (informal intro, control flow). Set up with the <a href=\"https://docs.astral.sh/uv/\" target=\"_blank\" rel=\"noopener\">uv docs<\/a>. Log: 5 differences from JS you noticed (indentation, <code>None<\/code>, truthiness, <code>range<\/code>, no <code>++<\/code>)."}, {"id": "m1-2026-09-29", "date": "2026-09-29", "label": "Tue 29 Sep", "topic": "Data structures", "text": "Tutorial section 5: lists, tuples, dicts, sets, and comprehensions. Rewrite 5 JS <code>map<\/code>/<code>filter<\/code>/<code>reduce<\/code> snippets from your own work as list/dict comprehensions."}, {"id": "m1-2026-09-30", "date": "2026-09-30", "label": "Wed 30 Sep", "topic": "Functions and modules", "text": "Tutorial sections 4.8 onward and 6: default args (and the mutable-default trap), <code>*args<\/code>/<code>**kwargs<\/code>, keyword-only args, lambdas, modules and imports."}, {"id": "m1-2026-10-01", "date": "2026-10-01", "label": "Thu 1 Oct", "topic": "Classes and the data model", "text": "Tutorial section 9 (classes), then <strong>dataclasses<\/strong> and type hints. Learn <code>__init__<\/code>, <code>__repr__<\/code>, <code>__len__<\/code>, <code>__getitem__<\/code>. Log: how is a Python class different from a JS class?"}, {"id": "m1-2026-10-02", "date": "2026-10-02", "label": "Fri 2 Oct", "topic": "Iteration and errors", "text": "Iterators, generators and <code>yield<\/code>, <code>with<\/code> and context managers, exceptions, <code>pathlib<\/code>. Write a generator that reads a large file line by line."}], "build": {"label": "Sat 3 to Sun 4 Oct", "title": "A stdlib-only data CLI", "sat": "2026-10-03", "steps": [{"id": "m1-w1-b1", "text": "<strong>CSV stats CLI (3h).<\/strong> Using only the standard library (<code>csv<\/code>, <code>argparse<\/code>, <code>statistics<\/code>, <code>collections<\/code>), write a CLI that loads a CSV and prints per-column type, count, missing values, mean/median/min/max for numbers, and the top 5 values for text. Use a real dataset, such as a CSV export from your work or a public dataset."}, {"id": "m1-w1-b2", "text": "<strong>Tests (1h).<\/strong> Add <code>pytest<\/code> tests for the parsing and stats functions."}, {"id": "m1-w1-b3", "text": "<strong>Port something you know (1 to 2h).<\/strong> Take a small JS utility you've written before and port it to idiomatic Python. Ask an AI to review it for \"un-Pythonic\" code."}], "done": "you can write a small Python program without reaching for JS habits. You'll redo this CLI in one line of pandas next week, which is the point."}}, {"title": "Week 2: NumPy, pandas and plotting", "intro": ["NumPy is the foundation of the whole ML stack. The key skill is <strong>vectorization<\/strong>: replacing Python loops with whole-array operations."], "days": [{"id": "m1-2026-10-05", "date": "2026-10-05", "label": "Mon 5 Oct", "topic": "NumPy arrays", "text": "<a href=\"https://numpy.org/doc/stable/user/absolute_beginners.html\" target=\"_blank\" rel=\"noopener\">NumPy: the absolute basics for beginners<\/a>, or watch the first half of freeCodeCamp's <a href=\"https://www.youtube.com/watch?v=QUT1VHiLmmI\" target=\"_blank\" rel=\"noopener\">Python NumPy Tutorial for Beginners<\/a>. Arrays, <code>shape<\/code>, <code>dtype<\/code>, creating arrays, basic maths. Log: why is a NumPy array faster than a Python list?"}, {"id": "m1-2026-10-06", "date": "2026-10-06", "label": "Tue 6 Oct", "topic": "Broadcasting and axes", "text": "NumPy docs on <a href=\"https://numpy.org/doc/stable/user/basics.broadcasting.html\" target=\"_blank\" rel=\"noopener\">broadcasting<\/a>. Practice <code>sum<\/code>/<code>mean<\/code> along <code>axis=0<\/code> and <code>axis=1<\/code> until you can predict output shapes. Rewrite three nested loops as vectorized code and time both with <code>%timeit<\/code>."}, {"id": "m1-2026-10-07", "date": "2026-10-07", "label": "Wed 7 Oct", "topic": "Indexing and reshaping", "text": "Slicing, fancy indexing, boolean masks, <code>reshape<\/code>, <code>transpose<\/code>, <code>stack<\/code>/<code>concatenate<\/code>. Do 15 problems from <a href=\"https://github.com/rougier/numpy-100\" target=\"_blank\" rel=\"noopener\">numpy-100<\/a>."}, {"id": "m1-2026-10-08", "date": "2026-10-08", "label": "Thu 8 Oct", "topic": "pandas", "text": "<a href=\"https://pandas.pydata.org/docs/user_guide/10min.html\" target=\"_blank\" rel=\"noopener\">10 minutes to pandas<\/a>, then the first lessons of <a href=\"https://www.kaggle.com/learn/pandas\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Pandas<\/a>. Video option: <a href=\"https://www.youtube.com/playlist?list=PL-osiE80TeTsWmV9i9c58mdDCSskIFdDS\" target=\"_blank\" rel=\"noopener\">Corey Schafer, Pandas Tutorials<\/a>. DataFrames, selecting, filtering, <code>groupby<\/code>, merging, missing data."}, {"id": "m1-2026-10-09", "date": "2026-10-09", "label": "Fri 9 Oct", "topic": "Plotting", "text": "<a href=\"https://matplotlib.org/stable/users/explain/quick_start.html\" target=\"_blank\" rel=\"noopener\">Matplotlib quick start<\/a>, plus <a href=\"https://www.kaggle.com/learn/data-visualization\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Data Visualization<\/a> if you want more practice. Line, scatter, histogram, subplots. Plot a histogram and a scatter plot from Thursday's dataset."}], "build": {"label": "Sat 10 to Sun 11 Oct", "title": "Exploratory data analysis", "sat": "2026-10-10", "steps": [{"id": "m1-w2-b1", "text": "<strong>Pick a dataset (30 min).<\/strong> Something you find interesting from Kaggle Datasets, for example housing prices, a sports dataset, or Stack Overflow's developer survey (you'll find front-end salary data in it)."}, {"id": "m1-w2-b2", "text": "<strong>EDA notebook (3h).<\/strong> Load it with pandas; clean types and missing values; answer 5 questions you write down beforehand using <code>groupby<\/code> and filtering; produce 5 clear charts; write a short findings section in markdown cells."}, {"id": "m1-w2-b3", "text": "<strong>Redo last week's CLI in pandas (30 min).<\/strong> Notice how much shorter it is."}, {"id": "m1-w2-b4", "text": "<strong>numpy-100 (1h).<\/strong> Continue to problem 40."}], "done": "you can go from raw CSV to charts and conclusions in an evening. This is the first step of every ML project in Months 3 and 4."}}, {"title": "Week 3: Linear algebra, the visual way", "intro": ["3Blue1Brown's <a href=\"https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab\" target=\"_blank\" rel=\"noopener\">Essence of Linear Algebra<\/a> playlist is the backbone. Each chapter is 10 to 17 minutes; watch it, then spend the rest of the hour on the NumPy exercise."], "days": [{"id": "m1-2026-10-12", "date": "2026-10-12", "label": "Mon 12 Oct", "topic": "Vectors, span, basis", "text": "<a href=\"https://www.youtube.com/watch?v=fNk_zzaMoSs\" target=\"_blank\" rel=\"noopener\">Ch 1: Vectors<\/a> and <a href=\"https://www.youtube.com/watch?v=k7RM-ot2NWY\" target=\"_blank\" rel=\"noopener\">Ch 2: Linear combinations, span and basis vectors<\/a>. In NumPy: add and scale vectors, and plot them as arrows with <code>matplotlib.quiver<\/code>."}, {"id": "m1-2026-10-13", "date": "2026-10-13", "label": "Tue 13 Oct", "topic": "Matrices as transformations", "text": "<a href=\"https://www.youtube.com/watch?v=kYB8IZa5AuE\" target=\"_blank\" rel=\"noopener\">Ch 3: Linear transformations and matrices<\/a> and <a href=\"https://www.youtube.com/watch?v=XkY2DOUCWMU\" target=\"_blank\" rel=\"noopener\">Ch 4: Matrix multiplication as composition<\/a>. In NumPy: apply rotation, scaling and shear matrices to a set of points, and plot before and after. Check that <code>A @ B<\/code> applied once equals <code>B<\/code> then <code>A<\/code>."}, {"id": "m1-2026-10-14", "date": "2026-10-14", "label": "Wed 14 Oct", "topic": "Determinant, inverse, rank", "text": "<a href=\"https://www.youtube.com/watch?v=Ip3X9LOh2dk\" target=\"_blank\" rel=\"noopener\">Ch 6: The determinant<\/a> and <a href=\"https://www.youtube.com/watch?v=uQhTuRlWMxw\" target=\"_blank\" rel=\"noopener\">Ch 7: Inverse matrices, column space and null space<\/a>. In NumPy: <code>np.linalg.det<\/code>, <code>inv<\/code>, <code>matrix_rank<\/code>. Build a matrix with determinant 0 and see what it does to the plane."}, {"id": "m1-2026-10-15", "date": "2026-10-15", "label": "Thu 15 Oct", "topic": "Non-square matrices and dot products", "text": "<a href=\"https://www.youtube.com/watch?v=v8VSDg_WQlA\" target=\"_blank\" rel=\"noopener\">Ch 8: Nonsquare matrices<\/a> and <a href=\"https://www.youtube.com/watch?v=LyGKycYT2v0\" target=\"_blank\" rel=\"noopener\">Ch 9: Dot products and duality<\/a>. Log: why does the dot product measure similarity? (This is exactly how embeddings and RAG search work in Month 10.) Compute cosine similarity between a few vectors by hand and with NumPy."}, {"id": "m1-2026-10-16", "date": "2026-10-16", "label": "Fri 16 Oct", "topic": "Change of basis", "text": "<a href=\"https://www.youtube.com/watch?v=P2LTAUO1TdA\" target=\"_blank\" rel=\"noopener\">Ch 13: Change of basis<\/a>. Then <a href=\"https://mml-book.github.io\" target=\"_blank\" rel=\"noopener\">Mathematics for Machine Learning<\/a> (free PDF) chapter 2, sections 2.1 to 2.3 (systems of linear equations, matrices), skimming the proofs."}], "build": {"label": "Sat 17 to Sun 18 Oct", "title": "Linear algebra from scratch, plus a visualizer", "sat": "2026-10-17", "steps": [{"id": "m1-w3-b1", "text": "<strong>A tiny matrix library (2.5h).<\/strong> In pure Python (no NumPy): vectors and matrices as lists, with <code>add<\/code>, <code>scale<\/code>, <code>dot<\/code>, <code>matmul<\/code>, <code>transpose<\/code>, <code>det<\/code> (2×2 and 3×3), and solving a system with Gaussian elimination. Write pytest tests that check every function against NumPy on random inputs."}, {"id": "m1-w3-b2", "text": "<strong>Speed check (30 min).<\/strong> Time your <code>matmul<\/code> against NumPy's on 200×200 matrices. Log the ratio; this is why vectorization matters."}, {"id": "m1-w3-b3", "text": "<strong>Transformation visualizer (2h).<\/strong> Your front-end strength: a small web page (or a Jupyter widget) where you drag the two basis vectors and watch a grid and a shape transform live, with the determinant shown as the area. You've just rebuilt the core 3Blue1Brown animation."}], "done": "you can look at a 2×2 matrix and sketch what it does to the plane."}}, {"title": "Week 4: Eigenvectors, SVD and PCA", "intro": ["This week connects linear algebra to your first real ML algorithm."], "days": [{"id": "m1-2026-10-19", "date": "2026-10-19", "label": "Mon 19 Oct", "topic": "Eigenvectors and eigenvalues", "text": "3Blue1Brown <a href=\"https://www.youtube.com/watch?v=PFDu9oVAE-g\" target=\"_blank\" rel=\"noopener\">Ch 14: Eigenvectors and eigenvalues<\/a>. In NumPy: <code>np.linalg.eig<\/code> on a 2×2 matrix; plot the eigenvectors and show that they only get scaled."}, {"id": "m1-2026-10-20", "date": "2026-10-20", "label": "Tue 20 Oct", "topic": "Norms, inner products, projections", "text": "<a href=\"https://mml-book.github.io\" target=\"_blank\" rel=\"noopener\">Mathematics for Machine Learning<\/a> chapter 3, sections 3.1 to 3.3 and 3.8 (projections), skimming proofs. Project a 2D point cloud onto a line in NumPy and plot it."}, {"id": "m1-2026-10-21", "date": "2026-10-21", "label": "Wed 21 Oct", "topic": "SVD", "text": "Steve Brunton, <a href=\"https://www.youtube.com/watch?v=gXbThCXjZFM\" target=\"_blank\" rel=\"noopener\">SVD: Overview<\/a>, then the next 2 or 3 videos in his <a href=\"https://www.youtube.com/playlist?list=PLMrJAkhIeNNSVjnsviglFoY2nXildDCcv\" target=\"_blank\" rel=\"noopener\">SVD playlist<\/a>. Log: what do U, Σ and Vᵀ each mean geometrically?"}, {"id": "m1-2026-10-22", "date": "2026-10-22", "label": "Thu 22 Oct", "topic": "PCA", "text": "StatQuest, <a href=\"https://www.youtube.com/watch?v=FgakZw6K1QQ\" target=\"_blank\" rel=\"noopener\">Principal Component Analysis (PCA), Step-by-Step<\/a>. Then MML chapter 10 introduction. Log: how does PCA relate to SVD?"}, {"id": "m1-2026-10-23", "date": "2026-10-23", "label": "Fri 23 Oct", "topic": "Review", "text": "Answer the self-check below without notes. Rewatch anything that feels shaky. Preview Month 2 with 3Blue1Brown's <a href=\"https://www.youtube.com/watch?v=WUvTyaaNkzM\" target=\"_blank\" rel=\"noopener\">The essence of calculus<\/a> (chapter 1)."}], "build": {"label": "Sat 24 to Sun 25 Oct", "title": "PCA from scratch", "sat": "2026-10-24", "steps": [{"id": "m1-w4-b1", "text": "<strong>PCA with SVD (2.5h).<\/strong> Write <code>pca(X, k)<\/code> in NumPy using only <code>np.linalg.svd<\/code>: centre the data, take the SVD, project onto the top k components, and return explained variance. Test it on the scikit-learn digits or Iris dataset, and verify that your projection matches <code>sklearn.decomposition.PCA<\/code> (up to sign)."}, {"id": "m1-w4-b2", "text": "<strong>Visualize (1.5h).<\/strong> Plot the digits dataset in 2D using your PCA, coloured by digit. Plot the explained-variance curve and pick k."}, {"id": "m1-w4-b3", "text": "<strong>Image compression with SVD (1.5h).<\/strong> Load a photo as a matrix, reconstruct it from the top k singular values, and build a slider that shows quality vs. k and the compression ratio. This is another good portfolio piece for your front-end skills."}, {"id": "m1-w4-b4", "text": "<strong>Write-up (30 min).<\/strong> A README explaining PCA in your own words, with your plots."}], "done": "you can explain PCA on a whiteboard and implement it in about 15 lines."}}], "checks": [{"id": "m1-check-1", "text": "Write a Python class, a generator and a list comprehension without looking up syntax."}, {"id": "m1-check-2", "text": "Predict the output shape of a NumPy operation with broadcasting and <code>axis<\/code>."}, {"id": "m1-check-3", "text": "Load, clean, group and plot a CSV with pandas."}, {"id": "m1-check-4", "text": "Explain, with a sketch, what a matrix does to space, and what a determinant of 0 means."}, {"id": "m1-check-5", "text": "Explain why the dot product (and cosine similarity) measures how similar two vectors are."}, {"id": "m1-check-6", "text": "Explain what an eigenvector is, visually."}, {"id": "m1-check-7", "text": "Explain what SVD decomposes a matrix into, and how PCA uses it."}, {"id": "m1-check-8", "text": "Implement PCA from scratch."}], "months": [{"n": 1, "phase": "Foundations", "learn": "Python for a JS developer, NumPy, pandas, matplotlib. Linear algebra with 3Blue1Brown's <em>Essence of Linear Algebra<\/em>, then selected chapters of <em>Mathematics for Machine Learning<\/em>.", "build": "Python CLI, a data-analysis notebook, a 2D matrix-transformation visualizer, and PCA using SVD. See <code>month-01-python-and-linear-algebra.md<\/code>.", "title": "Python, NumPy, linear algebra", "resources": [{"main": true, "html": "<a href=\"https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab\" target=\"_blank\" rel=\"noopener\">3Blue1Brown, Essence of Linear Algebra<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": true, "html": "<a href=\"https://docs.python.org/3/tutorial/\" target=\"_blank\" rel=\"noopener\">The Python Tutorial<\/a>", "type": "Docs", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU\" target=\"_blank\" rel=\"noopener\">Corey Schafer, Python Tutorials<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.kaggle.com/learn/python\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Python<\/a>, <a href=\"https://www.kaggle.com/learn/pandas\" target=\"_blank\" rel=\"noopener\">Pandas<\/a>, <a href=\"https://www.kaggle.com/learn/data-visualization\" target=\"_blank\" rel=\"noopener\">Data Visualization<\/a>", "type": "Interactive courses", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=QUT1VHiLmmI\" target=\"_blank\" rel=\"noopener\">freeCodeCamp, Python NumPy Tutorial for Beginners<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://github.com/rougier/numpy-100\" target=\"_blank\" rel=\"noopener\">numpy-100 exercises<\/a>", "type": "GitHub", "cost": "Free"}, {"main": false, "html": "<a href=\"https://mml-book.github.io\" target=\"_blank\" rel=\"noopener\">Mathematics for Machine Learning<\/a>, chapters 2 to 4", "type": "Free PDF book", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PLMrJAkhIeNNSVjnsviglFoY2nXildDCcv\" target=\"_blank\" rel=\"noopener\">Steve Brunton, SVD<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=FgakZw6K1QQ\" target=\"_blank\" rel=\"noopener\">StatQuest, PCA Step-by-Step<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PLE7DDD91010BC51F8\" target=\"_blank\" rel=\"noopener\">MIT 18.06 Linear Algebra, Gilbert Strang<\/a> (for more rigour)", "type": "YouTube playlist", "cost": "Free"}]}, {"n": 2, "phase": "Foundations", "learn": "Calculus and gradients (derivatives, chain rule, partial derivatives), probability, distributions, maximum likelihood, basic statistics.", "build": "Gradient descent from scratch, with an animated visualization of it moving across a loss surface.", "title": "Calculus, probability, statistics", "resources": [{"main": true, "html": "<a href=\"https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr\" target=\"_blank\" rel=\"noopener\">3Blue1Brown, Essence of Calculus<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": true, "html": "<a href=\"https://www.youtube.com/playlist?list=PLblh5JKOoLUK0FLuzwntyYI10UQFUhsY9\" target=\"_blank\" rel=\"noopener\">StatQuest, Statistics Fundamentals<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.khanacademy.org/math/multivariable-calculus\" target=\"_blank\" rel=\"noopener\">Khan Academy, Multivariable Calculus<\/a> (partial derivatives and gradients units)", "type": "Interactive course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.khanacademy.org/math/statistics-probability\" target=\"_blank\" rel=\"noopener\">Khan Academy, Statistics and Probability<\/a>", "type": "Interactive course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://seeing-theory.brown.edu\" target=\"_blank\" rel=\"noopener\">Seeing Theory<\/a>, interactive probability visualizations", "type": "Website", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PL2SOU6wwxB0uwwH80KTQ6ht66KWxbzTIo\" target=\"_blank\" rel=\"noopener\">Harvard Stat 110: Probability<\/a> (deeper, optional)", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.coursera.org/specializations/mathematics-for-machine-learning-and-data-science\" target=\"_blank\" rel=\"noopener\">Mathematics for Machine Learning and Data Science<\/a>, DeepLearning.AI", "type": "Course with exercises", "cost": "Coursera"}, {"main": false, "html": "<a href=\"https://mml-book.github.io\" target=\"_blank\" rel=\"noopener\">Mathematics for Machine Learning<\/a>, chapters 5 (vector calculus) and 6 (probability)", "type": "Free PDF book", "cost": "Free"}]}, {"n": 3, "phase": "Classical ML", "learn": "Andrew Ng's <em>Machine Learning Specialization<\/em> (or Stanford CS229 lectures for more rigor). Linear and logistic regression, loss functions, the bias–variance tradeoff, regularization, train/validation/test splits.", "build": "Linear and logistic regression from scratch in NumPy. Verify against scikit-learn on the same data.", "title": "Classical ML I (regression, classification, bias–variance)", "resources": [{"main": true, "html": "<a href=\"https://www.coursera.org/specializations/machine-learning-introduction\" target=\"_blank\" rel=\"noopener\">Machine Learning Specialization<\/a>, Andrew Ng (Stanford and DeepLearning.AI), courses 1 and 2", "type": "Course with labs", "cost": "Coursera"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PLblh5JKOoLUICTaGLRoHQDuF_7q2GfuJF\" target=\"_blank\" rel=\"noopener\">StatQuest, Machine Learning<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PLoROMvodv4rMiGQp3WXShtMGgzqpfVfbU\" target=\"_blank\" rel=\"noopener\">Stanford CS229, Andrew Ng (Autumn 2018)<\/a>, the more mathematical alternative", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://cs229.stanford.edu/main_notes.pdf\" target=\"_blank\" rel=\"noopener\">CS229 lecture notes<\/a>", "type": "Free PDF", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.statlearning.com\" target=\"_blank\" rel=\"noopener\">An Introduction to Statistical Learning, Python edition<\/a>", "type": "Free PDF book", "cost": "Free"}, {"main": false, "html": "<a href=\"https://developers.google.com/machine-learning/crash-course\" target=\"_blank\" rel=\"noopener\">Google Machine Learning Crash Course<\/a>", "type": "Interactive course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.kaggle.com/learn/intro-to-machine-learning\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Intro to Machine Learning<\/a>", "type": "Interactive course", "cost": "Free"}]}, {"n": 4, "phase": "Classical ML", "learn": "Decision trees, random forests, gradient boosting (XGBoost/LightGBM), SVMs, k-means and clustering. Rigorous evaluation: cross-validation, precision/recall, ROC, data leakage.", "build": "A decision tree from scratch. Then enter one Kaggle tabular competition with scikit-learn and gradient boosting.", "title": "Classical ML II (trees, boosting, SVMs, clustering, evaluation)", "resources": [{"main": true, "html": "<a href=\"https://www.youtube.com/playlist?list=PLblh5JKOoLUICTaGLRoHQDuF_7q2GfuJF\" target=\"_blank\" rel=\"noopener\">StatQuest, Machine Learning<\/a>: the decision tree, random forest, gradient boost, XGBoost, SVM and cross-validation videos", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.coursera.org/specializations/machine-learning-introduction\" target=\"_blank\" rel=\"noopener\">Machine Learning Specialization<\/a>, course 3 (unsupervised learning), plus the course 2 week on decision trees", "type": "Course with labs", "cost": "Coursera"}, {"main": false, "html": "<a href=\"https://www.statlearning.com\" target=\"_blank\" rel=\"noopener\">An Introduction to Statistical Learning<\/a>, chapters on tree-based methods, SVMs and unsupervised learning", "type": "Free PDF book", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.kaggle.com/learn/intermediate-machine-learning\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Intermediate Machine Learning<\/a> (pipelines, XGBoost, data leakage)", "type": "Interactive course", "cost": "Free"}]}, {"n": 5, "phase": "Deep learning", "learn": "Neural networks from first principles: Karpathy's <em>Neural Networks: Zero to Hero<\/em> (micrograd, makemore parts 1 to 3). Derive backprop on paper.", "build": "An MLP on MNIST in pure NumPy with a hand-written backward pass.", "title": "Neural networks from first principles", "resources": [{"main": true, "html": "<a href=\"https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ\" target=\"_blank\" rel=\"noopener\">Andrej Karpathy, Neural Networks: Zero to Hero<\/a>: micrograd and makemore parts 1 to 3", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi\" target=\"_blank\" rel=\"noopener\">3Blue1Brown, Neural Networks<\/a>, chapters 1 to 4 (watch these first)", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=VMj-3S1tku0\" target=\"_blank\" rel=\"noopener\">Karpathy, building micrograd<\/a> (the first video of the series)", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://udlbook.github.io/udlbook/\" target=\"_blank\" rel=\"noopener\">Understanding Deep Learning<\/a>, Simon Prince", "type": "Free online book", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.coursera.org/specializations/deep-learning\" target=\"_blank\" rel=\"noopener\">Deep Learning Specialization<\/a>, course 1 (a structured alternative)", "type": "Course with labs", "cost": "Coursera"}]}, {"n": 6, "phase": "Deep learning", "learn": "PyTorch: tensors, autograd, <code>nn.Module<\/code>, training loops. Initialization, normalization, optimizers (SGD to Adam), learning-rate schedules. CNNs (Stanford CS231n notes).", "build": "Train a CNN (a small ResNet) on CIFAR-10. Learn to diagnose a training run from its loss curves.", "title": "PyTorch, training, CNNs", "resources": [{"main": true, "html": "<a href=\"https://course.fast.ai\" target=\"_blank\" rel=\"noopener\">Practical Deep Learning for Coders<\/a>, fast.ai", "type": "Video course", "cost": "Free"}, {"main": true, "html": "<a href=\"https://docs.pytorch.org/tutorials/beginner/basics/intro.html\" target=\"_blank\" rel=\"noopener\">PyTorch: Learn the Basics<\/a>", "type": "Docs tutorial", "cost": "Free"}, {"main": false, "html": "<a href=\"https://cs231n.github.io\" target=\"_blank\" rel=\"noopener\">Stanford CS231n notes<\/a>", "type": "Course notes", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PL3FW7Lu3i5JvHM8ljYj-zLfQRF3EO8sYv\" target=\"_blank\" rel=\"noopener\">Stanford CS231n lectures (2017)<\/a>", "type": "YouTube playlist", "cost": "Free"}, {"main": false, "html": "<a href=\"https://d2l.ai\" target=\"_blank\" rel=\"noopener\">Dive into Deep Learning<\/a> (runnable PyTorch code)", "type": "Free online book", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.coursera.org/specializations/deep-learning\" target=\"_blank\" rel=\"noopener\">Deep Learning Specialization<\/a>, courses 2 and 4", "type": "Course with labs", "cost": "Coursera"}, {"main": false, "html": "<a href=\"https://www.kaggle.com/learn/intro-to-deep-learning\" target=\"_blank\" rel=\"noopener\">Kaggle Learn: Intro to Deep Learning<\/a>", "type": "Interactive course", "cost": "Free"}]}, {"n": 7, "phase": "LLM internals", "learn": "Embeddings, attention and transformers. Read <em>Attention Is All You Need<\/em> with <em>The Illustrated Transformer<\/em>. Tokenization (BPE). Karpathy's <em>Let's build GPT<\/em> and <em>Let's build the GPT Tokenizer<\/em>.", "build": "A GPT built from scratch and trained on Shakespeare or TinyStories, plus your own BPE tokenizer.", "title": "Transformers and LLM internals", "resources": [{"main": true, "html": "<a href=\"https://www.youtube.com/watch?v=kCc8FmEb1nY\" target=\"_blank\" rel=\"noopener\">Karpathy, Let's build GPT: from scratch, in code, spelled out<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": true, "html": "<a href=\"https://www.youtube.com/watch?v=zduSFxRajkE\" target=\"_blank\" rel=\"noopener\">Karpathy, Let's build the GPT Tokenizer<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=wjZofJX0v4M\" target=\"_blank\" rel=\"noopener\">3Blue1Brown, Transformers, the tech behind LLMs<\/a> and <a href=\"https://www.youtube.com/watch?v=eMlx5fFNoYc\" target=\"_blank\" rel=\"noopener\">Attention in transformers, step-by-step<\/a>", "type": "YouTube videos", "cost": "Free"}, {"main": false, "html": "<a href=\"https://jalammar.github.io/illustrated-transformer/\" target=\"_blank\" rel=\"noopener\">The Illustrated Transformer<\/a>, Jay Alammar", "type": "Article", "cost": "Free"}, {"main": false, "html": "<a href=\"https://arxiv.org/abs/1706.03762\" target=\"_blank\" rel=\"noopener\">Attention Is All You Need<\/a>", "type": "Paper", "cost": "Free"}, {"main": false, "html": "<a href=\"https://github.com/rasbt/LLMs-from-scratch\" target=\"_blank\" rel=\"noopener\">Build a Large Language Model (From Scratch), code repo<\/a>, Sebastian Raschka", "type": "GitHub (book is paid)", "cost": "Free / Paid"}, {"main": false, "html": "<a href=\"https://github.com/karpathy/nanoGPT\" target=\"_blank\" rel=\"noopener\">nanoGPT<\/a>", "type": "GitHub", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=l8pRSuU81PU\" target=\"_blank\" rel=\"noopener\">Karpathy, Let's reproduce GPT-2 (124M)<\/a> (stretch)", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/playlist?list=PLoROMvodv4rOSH4v6133s9LFPRHjEmbmJ\" target=\"_blank\" rel=\"noopener\">Stanford CS224N: NLP with Deep Learning<\/a>", "type": "YouTube playlist", "cost": "Free"}]}, {"n": 8, "phase": "LLM apps", "learn": "LLM behaviour and APIs in depth: sampling, context windows, system prompts, streaming, structured outputs, tool calling, prompt caching, token costs, hallucination, prompt injection. Local models with Ollama.", "build": "A chat app on the raw API (no framework) with streaming, structured JSON, a live cost counter, a hand-written tool loop, and a swap to a local model. See <code>later/month-08-llm-apps.md<\/code>.", "title": "LLM apps on the raw API", "resources": [{"main": true, "html": "<a href=\"https://github.com/anthropics/courses\" target=\"_blank\" rel=\"noopener\">Anthropic courses<\/a>: API fundamentals, prompt engineering, real-world prompting, prompt evaluations, tool use", "type": "GitHub notebooks", "cost": "Free (API usage costs a little)"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=zjkBMFhNj_g\" target=\"_blank\" rel=\"noopener\">Karpathy, Intro to Large Language Models<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=7xTGNNLPyMI\" target=\"_blank\" rel=\"noopener\">Karpathy, Deep Dive into LLMs like ChatGPT<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.youtube.com/watch?v=EWvNQjAaOHw\" target=\"_blank\" rel=\"noopener\">Karpathy, How I use LLMs<\/a>", "type": "YouTube video", "cost": "Free"}, {"main": false, "html": "<a href=\"https://anthropic.skilljar.com/claude-with-the-anthropic-api\" target=\"_blank\" rel=\"noopener\">Anthropic Academy: Building with the Claude API<\/a> (full catalog at <a href=\"https://anthropic.skilljar.com\" target=\"_blank\" rel=\"noopener\">anthropic.skilljar.com<\/a>)", "type": "Video course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.deeplearning.ai/courses/chatgpt-prompt-eng\" target=\"_blank\" rel=\"noopener\">ChatGPT Prompt Engineering for Developers<\/a>, DeepLearning.AI", "type": "Short course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://tiktokenizer.vercel.app\" target=\"_blank\" rel=\"noopener\">Tiktokenizer<\/a> and <a href=\"https://bbycroft.net/llm\" target=\"_blank\" rel=\"noopener\">LLM Visualization<\/a>", "type": "Interactive tools", "cost": "Free"}, {"main": false, "html": "<a href=\"https://ollama.com\" target=\"_blank\" rel=\"noopener\">Ollama<\/a>", "type": "Tool", "cost": "Free"}, {"main": false, "html": "<a href=\"https://openai.com/index/why-language-models-hallucinate/\" target=\"_blank\" rel=\"noopener\">Why language models hallucinate<\/a>, OpenAI", "type": "Article", "cost": "Free"}, {"main": false, "html": "<a href=\"https://arxiv.org/abs/2307.03172\" target=\"_blank\" rel=\"noopener\">Lost in the Middle<\/a>", "type": "Paper", "cost": "Free"}, {"main": false, "html": "<a href=\"https://simonwillison.net/series/prompt-injection/\" target=\"_blank\" rel=\"noopener\">Simon Willison, Prompt injection series<\/a>", "type": "Articles", "cost": "Free"}]}, {"n": 9, "phase": "Fine-tuning", "learn": "When to fine-tune vs. prompt vs. RAG. Supervised fine-tuning, LoRA/QLoRA, preference tuning (RLHF, DPO) at a conceptual level. Hugging Face <code>transformers<\/code> and <code>peft<\/code>. Read the LoRA and InstructGPT papers.", "build": "Fine-tune a small open model with LoRA on a task you choose (on Colab or Kaggle GPUs). Compare it against prompting the base model, using an eval set.", "title": "Fine-tuning", "resources": [{"main": true, "html": "<a href=\"https://huggingface.co/learn/llm-course/chapter1/1\" target=\"_blank\" rel=\"noopener\">Hugging Face LLM Course<\/a>, especially <a href=\"https://huggingface.co/learn/llm-course/chapter11/1\" target=\"_blank\" rel=\"noopener\">chapter 11: Supervised Fine-Tuning and LoRA<\/a>", "type": "Course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.deeplearning.ai/courses/post-training-of-llms\" target=\"_blank\" rel=\"noopener\">Post-training of LLMs<\/a>, DeepLearning.AI (SFT, DPO, online RL)", "type": "Short course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://unsloth.ai/docs\" target=\"_blank\" rel=\"noopener\">Unsloth docs<\/a> (fast LoRA fine-tuning on free Colab GPUs)", "type": "Docs", "cost": "Free"}, {"main": false, "html": "<a href=\"https://arxiv.org/abs/2106.09685\" target=\"_blank\" rel=\"noopener\">LoRA<\/a>, <a href=\"https://arxiv.org/abs/2203.02155\" target=\"_blank\" rel=\"noopener\">InstructGPT<\/a>, <a href=\"https://arxiv.org/abs/2305.18290\" target=\"_blank\" rel=\"noopener\">DPO<\/a>", "type": "Papers", "cost": "Free"}]}, {"n": 10, "phase": "RAG", "learn": "Document parsing, chunking, embedding models (and how contrastive training makes them), vector databases (pgvector), similarity search, citations.", "build": "RAG over documents you care about, built from scratch with no framework, with source citations in the UI.", "title": "RAG foundations", "resources": [{"main": true, "html": "<a href=\"https://www.deeplearning.ai/courses/retrieval-augmented-generation\" target=\"_blank\" rel=\"noopener\">Retrieval Augmented Generation (RAG)<\/a>, DeepLearning.AI (about 26 hours, so spread it over Months 10 and 11)", "type": "Course with assignments", "cost": "Free to watch"}, {"main": false, "html": "<em>AI Engineering<\/em>, Chip Huyen (O'Reilly), the RAG chapter", "type": "Book", "cost": "Paid"}, {"main": false, "html": "<a href=\"https://huggingface.co/learn/llm-course/chapter1/1\" target=\"_blank\" rel=\"noopener\">Hugging Face LLM Course<\/a>, the chapters on embeddings and semantic search", "type": "Course", "cost": "Free"}]}, {"n": 11, "phase": "RAG + evals", "learn": "Hybrid search, re-ranking (bi-encoders vs. cross-encoders), query rewriting, metadata filtering, contextual retrieval. When long context beats RAG. Evals: recall@k, faithfulness, golden test sets, LLM-as-judge. Your ML evaluation habits from Months 3 and 4 pay off here.", "build": "An eval harness for your RAG app. Test three chunking or retrieval strategies and pick a winner by measured numbers.", "title": "Advanced RAG and evals", "resources": [{"main": true, "html": "<a href=\"https://hamel.dev/blog/posts/evals/\" target=\"_blank\" rel=\"noopener\">Hamel Husain, Your AI Product Needs Evals<\/a>", "type": "Article", "cost": "Free"}, {"main": false, "html": "<a href=\"https://github.com/anthropics/courses\" target=\"_blank\" rel=\"noopener\">Anthropic courses: Prompt evaluations<\/a>", "type": "GitHub notebooks", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.deeplearning.ai/courses/retrieval-augmented-generation\" target=\"_blank\" rel=\"noopener\">Retrieval Augmented Generation (RAG)<\/a>, the later modules (continued from Month 10)", "type": "Course", "cost": "Free to watch"}, {"main": false, "html": "<em>AI Engineering<\/em>, Chip Huyen, the evaluation chapters", "type": "Book", "cost": "Paid"}]}, {"n": 12, "phase": "Agents", "learn": "The agent loop (think, act, observe), tool design, ReAct, planning, memory, error recovery. Workflows vs. agents: chaining, routing, parallelization, orchestrator–workers, evaluator–optimizer. MCP.", "build": "An agent in TypeScript with no framework, about 200 lines. Then an MCP server that exposes your RAG system as a tool.", "title": "Agents from first principles and MCP", "resources": [{"main": true, "html": "<a href=\"https://www.anthropic.com/engineering/building-effective-agents\" target=\"_blank\" rel=\"noopener\">Anthropic, Building Effective Agents<\/a>", "type": "Article", "cost": "Free"}, {"main": true, "html": "<a href=\"https://www.deeplearning.ai/courses/agentic-ai\" target=\"_blank\" rel=\"noopener\">Agentic AI<\/a>, Andrew Ng, DeepLearning.AI (about 10 hours)", "type": "Course", "cost": "Free to watch"}, {"main": false, "html": "<a href=\"https://huggingface.co/learn/agents-course\" target=\"_blank\" rel=\"noopener\">Hugging Face Agents Course<\/a>", "type": "Course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://modelcontextprotocol.io\" target=\"_blank\" rel=\"noopener\">Model Context Protocol docs<\/a>", "type": "Docs", "cost": "Free"}, {"main": false, "html": "<a href=\"https://huggingface.co/learn/mcp-course\" target=\"_blank\" rel=\"noopener\">Hugging Face MCP Course<\/a>", "type": "Course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.deeplearning.ai/courses/mcp-build-rich-context-ai-apps-with-anthropic\" target=\"_blank\" rel=\"noopener\">MCP: Build Rich-Context AI Apps with Anthropic<\/a>, DeepLearning.AI", "type": "Short course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://github.com/anthropics/courses\" target=\"_blank\" rel=\"noopener\">Anthropic courses: Tool use<\/a>", "type": "GitHub notebooks", "cost": "Free"}]}, {"n": 13, "phase": "Production agents", "learn": "Frameworks (LangGraph or a provider's Agent SDK), state, human-in-the-loop approvals, multi-agent patterns, guardrails, prompt-injection defence, tracing (e.g., Langfuse), agent evals.", "build": "Rebuild the Month 12 agent in a framework and compare. Add tracing, a human-approval step and an eval suite.", "title": "Production agents", "resources": [{"main": true, "html": "<a href=\"https://academy.langchain.com/courses/intro-to-langgraph\" target=\"_blank\" rel=\"noopener\">LangChain Academy: Introduction to LangGraph<\/a> (about 6 hours)", "type": "Video course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.deeplearning.ai/courses/evaluating-ai-agents\" target=\"_blank\" rel=\"noopener\">Evaluating AI Agents<\/a>, DeepLearning.AI", "type": "Short course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://langfuse.com/docs\" target=\"_blank\" rel=\"noopener\">Langfuse docs<\/a> (tracing and observability)", "type": "Docs", "cost": "Free"}, {"main": false, "html": "<a href=\"https://simonwillison.net/series/prompt-injection/\" target=\"_blank\" rel=\"noopener\">Simon Willison, Prompt injection series<\/a> (revisit for guardrails)", "type": "Articles", "cost": "Free"}]}, {"n": 14, "phase": "Automation + capstone", "learn": "n8n/Make/Zapier to learn the patterns. Code-first: webhooks, queues, cron, durable workflows (Temporal or Inngest), retries, idempotency. Browser automation with Playwright plus LLMs.", "build": "Capstone (below), ideally using a model you fine-tuned in Month 9 somewhere in the system.", "title": "Automation and capstone", "resources": [{"main": true, "html": "<a href=\"https://learn.temporal.io/courses/\" target=\"_blank\" rel=\"noopener\">Temporal courses<\/a>: Temporal 101 and 102 (durable execution)", "type": "Course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://docs.n8n.io/courses/level-one/\" target=\"_blank\" rel=\"noopener\">n8n text courses<\/a>, levels one and two", "type": "Course", "cost": "Free"}, {"main": false, "html": "<a href=\"https://www.deeplearning.ai/courses/building-ai-browser-agents\" target=\"_blank\" rel=\"noopener\">Building AI Browser Agents<\/a>, DeepLearning.AI", "type": "Short course", "cost": "Free"}]}]};
+const TZ = 'Asia/Kolkata';
+const CHECK_SVG = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+
+/* ---------- state ---------- */
+let ticks = {};          // id -> true
+let db = null, col = null;
+const LS = 'logbook-ticks';
+try { ticks = JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch (e) { ticks = {}; }
+function cache(){ try { localStorage.setItem(LS, JSON.stringify(ticks)); } catch (e) {} }
+
+/* ---------- dates ---------- */
+function todayISO(){
+  const p = new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  return p; // YYYY-MM-DD
+}
+function addDays(iso, n){ const d = new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function fmt(iso){ return new Date(iso+'T12:00:00Z').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'}); }
+
+/* ---------- index all checkable items ---------- */
+const all = [];          // {id, month}
+const byDate = {};       // iso -> {kind:'day', item} | {kind:'build', week}
+DATA.weeks.forEach((w,wi) => {
+  w.days.forEach(d => { all.push({id:d.id,month:1}); byDate[d.date] = {kind:'day', item:d, week:w}; });
+  w.build.steps.forEach(s => all.push({id:s.id,month:1}));
+  byDate[w.build.sat] = {kind:'build', week:w}; byDate[addDays(w.build.sat,1)] = {kind:'build', week:w};
+});
+DATA.checks.forEach(c => all.push({id:c.id,month:1}));
+DATA.months.forEach(m => { if (m.n>1){ all.push({id:`m${m.n}-learn`,month:m.n}); all.push({id:`m${m.n}-build`,month:m.n}); } });
+const monthIds = n => all.filter(a => a.month===n).map(a => a.id);
+
+/* ---------- rendering ---------- */
+function box(id, label){
+  return `<label class="chk"><input type="checkbox" id="c-${id}" data-id="${id}" ${ticks[id]?'checked':''} aria-label="${label.replace(/"/g,'&quot;')}"><span>${CHECK_SVG}</span></label>`;
+}
+function strip(h){ const t=document.createElement('div'); t.innerHTML=h; return t.textContent; }
+
+function renderToday(){
+  const t = todayISO(), el = document.getElementById('today');
+  const start = DATA.weeks[0].days[0].date;
+  let e = byDate[t], label = 'Today', when = t;
+  if (!e && t < start){ e = byDate[start]; label = 'First up'; when = start; }
+  if (!e){
+    const last = DATA.weeks[DATA.weeks.length-1].build.sat;
+    el.innerHTML = t > addDays(last,1)
+      ? `<div class="top"><h2>Buffer week</h2><span class="date">${fmt(t)}</span></div><p class="muted" style="margin:0">Month 1's plan is finished. Use these days to catch up on anything unticked below, then Month 2 starts.</p>`
+      : `<div class="top"><h2>Nothing scheduled today</h2><span class="date">${fmt(t)}</span></div>`;
+    return;
+  }
+  if (e.kind === 'day'){
+    const d = e.item;
+    el.innerHTML = `<div class="top"><span class="eyebrow">${label} · ${e.week.title}</span><span class="date">${fmt(when)} · about 1 hour</span></div>
+      <div class="item ${ticks[d.id]?'done':''}" style="padding:0">${box(d.id,d.topic)}<div class="body"><div class="meta"><h2 class="topic">${d.topic}</h2></div>${d.text}</div></div>`;
+  } else {
+    const b = e.week.build;
+    const n = b.steps.filter(s=>ticks[s.id]).length;
+    el.innerHTML = `<div class="top"><span class="eyebrow">${label} · weekend build · 5 to 6 hours</span><span class="date">${fmt(when)} · ${n}/${b.steps.length} done</span></div>
+      <h2>${b.title}</h2>
+      <ul class="list">${b.steps.map(s=>`<li class="item ${ticks[s.id]?'done':''}">${box(s.id,strip(s.text))}<div class="body">${s.text}</div></li>`).join('')}</ul>`;
+  }
+}
+
+function renderRail(){
+  const r = document.getElementById('rail');
+  r.innerHTML = DATA.months.map(m => {
+    const ids = monthIds(m.n), p = ids.filter(i=>ticks[i]).length/ids.length;
+    return `<button type="button" id="rail-${m.n}" data-m="${m.n}" aria-current="${m.n===cur}" title="Month ${m.n}: ${m.title}"><small>M</small>${m.n}<i class="fill" style="width:${p*100}%"></i></button>`;
+  }).join('');
+}
+
+function weekHTML(w){
+  const t = todayISO();
+  const ids = [...w.days.map(d=>d.id), ...w.build.steps.map(s=>s.id)];
+  const n = ids.filter(i=>ticks[i]).length;
+  const days = w.days.map(d => `<li class="item ${ticks[d.id]?'done':''} ${d.date===t?'is-today':''}">${box(d.id,d.label+' '+d.topic)}
+      <div class="body"><div class="meta"><span class="d">${d.label}</span><span class="topic">${d.topic}</span>${d.date===t?'<span class="tag">Today</span>':''}</div>${d.text}</div></li>`).join('');
+  const b = w.build, wk = t===b.sat || t===addDays(b.sat,1);
+  const steps = b.steps.map(s => `<li class="item ${ticks[s.id]?'done':''}">${box(s.id,strip(s.text))}<div class="body">${s.text}</div></li>`).join('');
+  return `<section class="week">
+    <div class="week-head"><h3>${w.title}</h3><span class="count">${n}/${ids.length}</span></div>
+    ${w.intro.map(p=>`<p class="intro">${p}</p>`).join('')}
+    <ul class="list">${days}</ul>
+    <div class="build"><div class="bh"><span class="eyebrow">Weekend build · ${b.label}${wk?' · <span class="tag">This weekend</span>':''}</span><h3>${b.title}</h3></div>
+      <ul class="list">${steps}</ul><div class="donewhen"><strong>Done when:</strong> ${b.done}</div></div>
+  </section>`;
+}
+
+function resHTML(m){
+  return `<section class="week"><div class="week-head"><h3>Learning materials</h3><span class="count">★ main resource</span></div>
+    <ul class="res">${m.resources.map(r=>`<li><span class="star">${r.main?'★':''}</span><span>${r.html}</span><span class="kind">${r.type} · ${r.cost}</span></li>`).join('')}</ul></section>`;
+}
+
+function renderMonth(){
+  const m = DATA.months[cur-1], el = document.getElementById('month');
+  const ids = monthIds(cur), n = ids.filter(i=>ticks[i]).length;
+  let h = `<div class="month-head"><span class="eyebrow">Month ${m.n} of 14 · ${m.phase}</span><h2>${m.title}</h2>
+    <div class="bar"><i style="width:${n/ids.length*100}%"></i></div><span class="muted" style="font-size:13px">${n} of ${ids.length} ticked</span></div>`;
+  if (cur === 1){
+    h += DATA.weeks.map(weekHTML).join('');
+    h += `<section class="week"><div class="week-head"><h3>End-of-month self-check</h3><span class="count">${DATA.checks.filter(c=>ticks[c.id]).length}/${DATA.checks.length}</span></div>
+      <p class="intro">You're ready for Month 2 if you can do these without AI help. Oct 26 to 31 is buffer for catching up.</p>
+      <ul class="list">${DATA.checks.map(c=>`<li class="item ${ticks[c.id]?'done':''}">${box(c.id,strip(c.text))}<div class="body">${c.text}</div></li>`).join('')}</ul></section>`;
+  } else {
+    h += `<div class="note"><b>Day-by-day plan not written yet.</b> Month ${m.n} gets its own daily plan closer to the time. For now, tick the two goals when you finish them.${m.n===8?' A week-by-week draft already exists in the roadmap folder (later/month-08-llm-apps.md).':''}</div>
+      <ul class="list">
+        <li class="item ${ticks[`m${m.n}-learn`]?'done':''}">${box(`m${m.n}-learn`,'Weekday learning')}<div class="body"><div class="meta"><span class="d">Weekdays · learn</span></div>${m.learn}</div></li>
+        <li class="item ${ticks[`m${m.n}-build`]?'done':''}">${box(`m${m.n}-build`,'Weekend build')}<div class="body"><div class="meta"><span class="d">Weekends · build</span></div>${m.build}</div></li>
+      </ul>`;
+  }
+  h += resHTML(m);
+  el.innerHTML = h;
+}
+
+function streak(){
+  // consecutive scheduled days (weekday tasks, or any build step on a weekend) ticked, counting back from today/yesterday
+  let d = todayISO(), s = 0;
+  const hit = iso => { const e = byDate[iso]; if (!e) return null; return e.kind==='day' ? !!ticks[e.item.id] : e.week.build.steps.some(x=>ticks[x.id]); };
+  if (hit(d) === false) d = addDays(d,-1);
+  for (let i=0;i<60;i++){ const h = hit(d); if (h===null) break; if (!h) break; s++; d = addDays(d,-1); }
+  return s;
+}
+
+function renderStats(){
+  const done = all.filter(a=>ticks[a.id]).length, m1 = monthIds(1);
+  document.getElementById('st-all').textContent = `${done}/${all.length}`;
+  document.getElementById('st-m1').textContent = Math.round(m1.filter(i=>ticks[i]).length/m1.length*100)+'%';
+  document.getElementById('st-streak').textContent = streak();
+}
+
+function render(){ renderToday(); renderRail(); renderMonth(); renderStats(); }
+
+/* ---------- navigation ---------- */
+let cur = 1;
+const fromHash = () => { const m = /^#m(\d{1,2})$/.exec(location.hash); const n = m ? +m[1] : 0; return n>=1&&n<=14 ? n : 0; };
+cur = fromHash() || (todayISO() > '2026-10-31' ? 2 : 1);
+document.getElementById('rail').addEventListener('click', e => {
+  const b = e.target.closest('button[data-m]'); if (!b) return;
+  cur = +b.dataset.m; history.replaceState(null,'','#m'+cur); render();
+});
+addEventListener('hashchange', () => { const n = fromHash(); if (n){ cur = n; render(); } });
+
+/* ---------- ticking ---------- */
+const pending = {};
+document.addEventListener('change', async e => {
+  const inp = e.target.closest('input[data-id]'); if (!inp) return;
+  const id = inp.dataset.id, v = inp.checked;
+  if (v) ticks[id] = true; else delete ticks[id];
+  cache(); render();
+  const f = document.getElementById('c-'+id); if (f) f.focus();
+  if (!col) return;
+  // one write at a time per doc
+  pending[id] = v;
+  if (pending[id+'#busy']) return;
+  pending[id+'#busy'] = true;
+  try {
+    while (id in pending){
+      const val = pending[id]; delete pending[id];
+      await col.doc(id).set({done: val, at: new Date().toISOString()});
+    }
+  } catch (err) {
+    setSync('local', 'Could not save to your account. Saved in this browser.');
+  } finally { delete pending[id+'#busy']; }
+});
+
+function setSync(state, text){ const s = document.getElementById('sync'); s.dataset.state = state; s.textContent = text; }
+
+render();
+
+/* ---------- account storage ---------- */
+(async () => {
+  try { db = await window.claude?.use?.('db'); } catch (e) { db = null; }
+  if (!db){ setSync('local','Saved in this browser only'); return; }
+  col = db.collection('ticks');
+  col.onSnapshot(snap => {
+    const next = {};
+    snap.docs.forEach(d => { const v = d.data(); if (v && v.done) next[d.id] = true; });
+    // first run: push ticks made before the account store connected
+    if (snap.empty && Object.keys(ticks).length){
+      Object.keys(ticks).forEach(id => col.doc(id).set({done:true, at:new Date().toISOString()}).catch(()=>{}));
+      return;
+    }
+    ticks = next; cache(); render();
+    setSync('cloud','Saved to your account');
+  }, () => setSync('local','Saved in this browser only'));
+})();
+</script>
+
+</body>
+</html>
